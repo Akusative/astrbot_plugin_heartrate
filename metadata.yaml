@@ -1,0 +1,6 @@
+name: astrbot_plugin_heartrate
+display_name: 心跳感应
+desc: 实时心率监测插件，自动注入每次对话，支持手动查看和服务管理
+version: v1.3.0
+author: 沈菀
+repo: "https://github.com/yourusername/astrbot_plugin_heartrate"
