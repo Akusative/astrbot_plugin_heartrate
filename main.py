@@ -223,7 +223,7 @@ class HeartRatePlugin(Star):
                     req.system_prompt += prompt_injection
             else:
                 req.system_prompt = f'[用户心率数据] {hr_prompt}'
-            logger.debug('已注入心率数据: ' + hr_prompt)
+            logger.info('已添加心跳感知信息: ' + hr_prompt)
         except Exception as e:
             logger.error('心率注入异常: ' + str(e))
 
