@@ -4,7 +4,7 @@
 
 ## 🌟 最新特性 (v1.3.0)
 
-- 🤖 **全协议兼容重构**：从旧版单一支持 Apple Watch HDS (HTTP PUT)，全面升级为支持 GET/POST/PUT 及 URL Param、JSON、Form-Data 多种传参格式。
+- 🤖 **全协议兼容重构**：从旧版单一支持 Apple Watch HDS (Health Data Server) (HTTP PUT)，全面升级为支持 GET/POST/PUT 及 URL Param、JSON、Form-Data 多种传参格式。
 - ⌚ **多设备无缝支持**：
   - **Apple Watch** (通过 HDS App 推送)
   - **小米手环** (配合 `CatlabPing` 安卓伴侣 App 拦截 Notify for Mi Band 广播)
