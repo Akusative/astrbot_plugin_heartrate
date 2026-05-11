@@ -87,7 +87,7 @@ def _format_time_ago(ts):
         return str(int(diff // 86400)) + '天前'
 
 
-@register('astrbot_plugin_heartrate', '沈菀', '心跳感应 - 实时心率监测', 'v1.2.0')
+@register('astrbot_plugin_heartrate', '沈菀', '心跳感应 - 实时心率监测', 'v1.3.1')
 class HeartRatePlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -114,6 +114,55 @@ class HeartRatePlugin(Star):
                 logger.error(f"释放服务脚本失败: {e}")
                 
         logger.info('心跳感应插件已加载 | 数据路径: ' + HEARTRATE_FILE)
+        
+        # 随插件自然启动拉起心率服务端口
+        asyncio.create_task(self._start_service_bg())
+
+    async def _start_service_bg(self):
+        """后台启动服务"""
+        is_running = await self._start_service()
+        if is_running:
+            logger.info("心率接收服务已成功在后台自启动 (端口 3476)")
+        else:
+            logger.error("心率接收服务后台自启动失败")
+
+    async def _start_service(self):
+        try:
+            # 兼容无窗口进程：在 Windows 上通过 wmic 杀掉心率服务
+            if sys.platform == 'win32':
+                subprocess.run('wmic process where "commandline like \'%heartrate_receiver_v2.py%\' and name=\'python.exe\'" call terminate', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                subprocess.run(['pkill', '-f', 'heartrate_receiver_v2.py'],
+                               timeout=5, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            await asyncio.sleep(1)
+            
+            if SERVICE_DIR and os.path.exists(os.path.join(SERVICE_DIR, 'heartrate_receiver_v2.py')):
+                if sys.platform == 'win32':
+                    subprocess.Popen(
+                        ['python', 'heartrate_receiver_v2.py'],
+                        cwd=SERVICE_DIR,
+                        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+                    )
+                else:
+                    subprocess.Popen(
+                        ['python3', 'heartrate_receiver_v2.py'],
+                        cwd=SERVICE_DIR,
+                        start_new_session=True
+                    )
+                await asyncio.sleep(3)
+                
+                if sys.platform == 'win32':
+                    check = subprocess.run('netstat -ano | findstr 3476', shell=True, capture_output=True, text=True, timeout=5)
+                    is_running = 'LISTENING' in check.stdout
+                else:
+                    check = subprocess.run('ss -tuln | grep 3476', shell=True, capture_output=True, text=True, timeout=5)
+                    is_running = check.stdout.strip() != ""
+                
+                return is_running
+            return False
+        except Exception as e:
+            logger.error('服务启动异常: ' + str(e))
+            return False
 
     @filter.command('查看心率')
     async def check_heartrate_cmd(self, event: AstrMessageEvent):
@@ -152,45 +201,12 @@ class HeartRatePlugin(Star):
 
     @filter.command('重启心率服务')
     async def restart_heartrate_service(self, event: AstrMessageEvent):
-        try:
-            if sys.platform == 'win32':
-                subprocess.run(['taskkill', '/f', '/im', 'python.exe', '/fi', 'WINDOWTITLE eq heartrate*'],
-                               timeout=5, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            else:
-                subprocess.run(['pkill', '-f', 'heartrate_receiver_v2.py'],
-                               timeout=5, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            await asyncio.sleep(1)
-            if SERVICE_DIR and os.path.exists(os.path.join(SERVICE_DIR, 'heartrate_receiver_v2.py')):
-                if sys.platform == 'win32':
-                    subprocess.Popen(
-                        ['python', 'heartrate_receiver_v2.py'],
-                        cwd=SERVICE_DIR,
-                        creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
-                    )
-                else:
-                    subprocess.Popen(
-                        ['python3', 'heartrate_receiver_v2.py'],
-                        cwd=SERVICE_DIR,
-                        start_new_session=True
-                    )
-                await asyncio.sleep(3)
-                
-                if sys.platform == 'win32':
-                    check = subprocess.run('netstat -ano | findstr 3476', shell=True, capture_output=True, text=True, timeout=5)
-                    is_running = 'LISTENING' in check.stdout
-                else:
-                    check = subprocess.run('ss -tuln | grep 3476', shell=True, capture_output=True, text=True, timeout=5)
-                    is_running = check.stdout.strip() != ""
-                
-                if is_running:
-                    yield event.plain_result('心率服务重启成功，请在手表上重新开启运动模式')
-                else:
-                    yield event.plain_result('心率服务启动失败，请检查服务器')
-            else:
-                yield event.plain_result('找不到心率服务脚本，请检查路径')
-        except Exception as e:
-            logger.error('重启服务异常: ' + str(e))
-            yield event.plain_result('重启失败: ' + str(e))
+        yield event.plain_result('正在启动/重启心率服务，请稍候...')
+        is_running = await self._start_service()
+        if is_running:
+            yield event.plain_result('心率服务启动/重启成功，请在手表上重新开启运动模式')
+        else:
+            yield event.plain_result('心率服务启动失败，请检查服务器或系统日志')
 
     @filter.on_llm_request(priority=8)
     async def inject_heartrate(self, event: AstrMessageEvent, req: ProviderRequest):
