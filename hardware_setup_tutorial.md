@@ -34,7 +34,7 @@
 
 ## 🍊 方案二：支持心率广播的智能穿戴设备（小米/华为/华米等）接入指南
 
-从 **CatlabPing v3.4.1** 开始，我们支持了 **原生 GATT 协议解析 (BLE 直连)**，不再需要安装 Notify for Mi Band 等第三方破解软件！不限制于小米手环，只要你的设备（包含具备心率广播功能的华为手表等）支持标准的心率服务 (UUID `180D`)，就能用 Android 手机直接连接并获取 BPM。
+从 **CatlabPing v3.4.2** 开始，我们支持了 **原生 GATT 协议解析 (BLE 直连)**，不再需要安装 Notify for Mi Band 等第三方破解软件！不限制于小米手环，只要你的设备（包含具备心率广播功能的华为手表等）支持标准的心率服务 (UUID `180D`)，就能用 Android 手机直接连接并获取 BPM。
 
 ### 1. 开启设备的「心率广播」
 1. 打开你平时用来同步手环/手表的官方 App（如 **小米运动健康**、**Zepp Life**、**华为运动健康** 等）。
@@ -44,8 +44,8 @@
    - *（可选记录）* 记住设备的蓝牙 MAC 地址（如 `EB:12:34:56:78:90`），配置时填入连接会更迅速。
 
 ### 2. 配置 CatlabPing 直连参数
-1. 前往 CatlabPing 仓库下载安装 **v3.4.1+** 版本的 Android App。
-   - 👉 [点击直接下载 CatlabPing_v3.4.1_debug.apk](https://github.com/Akusative/CatlabPing/releases/download/v3.4.1/CatlabPing_v3.4.1_debug.apk)
+1. 前往 CatlabPing 仓库下载安装 **v3.4.2+** 版本的 Android App。
+   - 👉 [点击直接下载 CatlabPing_v3.4.2_debug.apk](https://github.com/Akusative/CatlabPing/releases/download/v3.4.2/CatlabPing_v3.4.2_debug.apk)
 2. 打开 App，在首页找到 **💖 心率自动监听** 卡片，点击 **⚙️ 设置**。
 3. **填写服务器地址**：`http://你的公网IP:3476`。
 4. **勾选【直接连接 BLE 设备】** 开启原生蓝牙直连模式。
